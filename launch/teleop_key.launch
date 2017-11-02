@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="frc_motor_driver" name="esc" type="motor_control.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)"/>
+</launch>
