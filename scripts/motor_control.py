@@ -12,6 +12,7 @@ bus = smbus.SMBus(1)
 # This is the address we setup in the Arduino Program
 address = 0x04
 
+curent_timer = None
 
 def callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
@@ -25,7 +26,12 @@ def callback(data):
 
     bus.write_byte_data(address,int(left),int(right))    
 
-    Timer(1, lambda : bus.write_byte_data(address,128,128), ()).start()
+    global curent_timer
+    if curent_timer != None:
+        curent_timer.cancel()
+
+    curent_timer = Timer(1, lambda : bus.write_byte_data(address,128,128), ())
+    curent_timer.start()
 
 def clamp(value,mi,ma):
     return min(max(value,mi), ma)
