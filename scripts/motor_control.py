@@ -46,6 +46,7 @@ def listener():
     rospy.spin()
 
 if __name__ == '__main__':
+    bus.write_byte_data(address,128,128)
     listener()
 
 
