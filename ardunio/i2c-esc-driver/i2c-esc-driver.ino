@@ -85,7 +85,7 @@ void Wheel::setGains(double kP, double kI, double kD, double kF) {
 	this->kI = kI;
 	this->kD = kD;
 	this->kF = kF;
-  	this->pid->SetTunings(kP,kI,kD);
+  this->pid->SetTunings(kP,kI,kD);
 }
 
 void Wheel::reverseWheel() {
@@ -93,8 +93,8 @@ void Wheel::reverseWheel() {
 }
 
 void Wheel::setTargetVelocity(double targetSpeed){
-  	this->targetVelocity = this->dir * targetSpeed;
-  	this->pidSetpoint = this->targetVelocity;
+  this->targetVelocity = this->dir * targetSpeed;
+  this->pidSetpoint = this->targetVelocity;
 	this->setMode(VELOCITY);
 }
 
@@ -141,17 +141,20 @@ void Wheel::update(){
 		case VELOCITY: //PIDF(measuredVelocity, output)
 			Serial.println("Mode: VELOCITY");
       this->pidInput = this->measuredVelocity;
+      Serial.println(this->pidInput);
 			this->pid->Compute();
-			this->motorOutput = this->pidOutput + this->kF * this->dir;
+     Serial.println(this->pidOutput);
+			this->motorOutput = this->pidOutput + this->kF * this->targetVelocity;
 			break;
 		default:
 			Serial.println("Bad Mode");
 		}
+    Serial.println(this->motorOutput);
+  	this->motorOutput = squeeze(this->motorOutput, -255, 255);
+  	Serial.println(this->motorOutput);
+  	int servoOutput = (int) mapd(this->motorOutput, -255, 255, 1500 - 532, 1500 + 532);
+    this->motor->writeMicroseconds(servoOutput);
 	}
-	this->motorOutput = squeeze(this->motorOutput, -255, 255);
-	Serial.println(this->motorOutput);
-	int servoOutput = (int) mapd(this->motorOutput, -255, 255, 1500 - 532, 1500 + 532);
-  this->motor->writeMicroseconds(this->motorOutput);
 }
 
 
@@ -206,19 +209,19 @@ void sendData(){
 }
 
 void setup() {
-  Wire.begin(SLAVE_ADDRESS);
-  
-  Wire.onReceive(receiveData);
-  Wire.onRequest(sendData);
+//  Wire.begin(SLAVE_ADDRESS);
+//  
+//  Wire.onReceive(receiveData);
+//  Wire.onRequest(sendData);
 
   
   left = new Wheel(18, 19, 11, -1);
   left->setGains(40, 100, 0, 100);
-	left->setTargetVelocity(0.1);
+	left->setTargetVelocity(0);
 
   right = new Wheel(2, 3, 12, 1);
   right->setGains(40, 100, 0, 100);
-	right->setTargetVelocity(0.1);
+	right->setTargetVelocity(0);
 
 	Serial.begin(9600);
 }
