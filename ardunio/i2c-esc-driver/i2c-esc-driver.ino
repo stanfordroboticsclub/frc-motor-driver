@@ -215,13 +215,13 @@ void setup() {
 //  Wire.onRequest(sendData);
 
   
-  left = new Wheel(18, 19, 11, -1);
+  left = new Wheel(18, 19, 11, 1);
   left->setGains(40, 100, 0, 100);
 	left->setTargetVelocity(0);
 
-  right = new Wheel(2, 3, 12, 1);
+  right = new Wheel(2, 3, 12, -1);
   right->setGains(40, 100, 0, 100);
-	right->setTargetVelocity(0);
+	right->setTargetVelocity(0.5);
 
 	Serial.begin(9600);
 }
