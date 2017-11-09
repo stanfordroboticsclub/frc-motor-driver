@@ -95,15 +95,18 @@ void Wheel::reverseWheel() {
 void Wheel::setTargetVelocity(double targetSpeed){
   	this->targetVelocity = this->dir * targetSpeed;
   	this->pidSetpoint = this->targetVelocity;
+	this->setMode(VELOCITY);
 }
 
 void Wheel::setTargetPosition(double targetPosition) {
 	this->targetPosition = this->dir * targetPosition;
 	this->pidSetpoint = this->targetPosition;
+	this->setMode(POSITION);
 }
 
 void Wheel::setTargetVoltage(double targetVoltage) {
 	this->targetVoltage = this->dir * targetVoltage;
+	this->setMode(VOLTAGE);
 }
 
 void Wheel::resetPosition() {
@@ -211,12 +214,10 @@ void setup() {
   
   left = new Wheel(18, 19, 11, -1);
   left->setGains(40, 100, 0, 100);
-	left->setMode(VELOCITY);
 	left->setTargetVelocity(0.1);
 
   right = new Wheel(2, 3, 12, 1);
   right->setGains(40, 100, 0, 100);
-	right->setMode(VELOCITY);
 	right->setTargetVelocity(0.1);
 
 	Serial.begin(9600);
