@@ -22,7 +22,7 @@ struct Wheel{
 
 	Encoder *encoder;
 	Servo *motor;
-	int last_encoder;
+	long last_encoder;
 
 	PID *pid;
 	double kP;
@@ -117,6 +117,17 @@ void Wheel::update(){
 	if(millis() - this->last_time > this->MS_PER_UPDATE) {
     double dT = (millis() - (double) this->last_time) / 1000;
     this->last_time = millis();
+
+    // experiment for detecting broken wires
+    // doesn't work as wheels are initialy not spining
+    bool wire_contact = true;
+    if(abs(last_encoder - this->encoder->read()) <= 1){
+      Serial.println("LOST ENCODER!");
+      wire_contact = false;
+    }
+
+    Serial.print(last_encoder);Serial.print(" "); Serial.print(this->encoder->read());
+    
     this->last_encoder = this->encoder->read();
 
     double newMeasuredPosition = this->last_encoder / this->TICKS_PER_REV * this->WHEEL_CIRCUMFERENCE;
@@ -153,7 +164,9 @@ void Wheel::update(){
   	this->motorOutput = squeeze(this->motorOutput, -255, 255);
   	Serial.println(this->motorOutput);
   	int servoOutput = (int) mapd(this->motorOutput, -255, 255, 1500 - 532, 1500 + 532);
+ 
     this->motor->writeMicroseconds(servoOutput);
+
 	}
 }
 
@@ -217,7 +230,7 @@ void setup() {
   
   left = new Wheel(2, 3, 11, 1);
   left->setGains(40, 100, 0, 100);
-	left->setTargetVelocity(-0.5);
+	left->setTargetVelocity(0.3);
 
   right = new Wheel(18, 19, 12, -1);
   right->setGains(40, 100, 0, 100);
