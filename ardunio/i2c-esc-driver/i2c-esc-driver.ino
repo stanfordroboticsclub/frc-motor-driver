@@ -23,7 +23,7 @@ void receiveData(int byteCount){
     left->setTargetVelocity(left_target);
 
   }
-  Serial.print(", "); 
+//  Serial.print(", "); 
   if(Wire.available()) {
     int right_read = Wire.read();
     double right_target = mapd(right_read, 0, 255 , -2, 2);
@@ -32,8 +32,8 @@ void receiveData(int byteCount){
 }
 
 void sendData(){
-  Wire.write(0);
-  Wire.write(0);
+  Wire.write(121);
+  Wire.write(93);
 }
 
 void setup() {
