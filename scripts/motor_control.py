@@ -24,14 +24,23 @@ def callback(data):
     left = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),100,156)
     right = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),100,156)
 
-    bus.write_byte_data(address,int(left),int(right))    
+    try:
+        bus.write_byte_data(address,int(left),int(right))    
+    except IOError:
+        print 'IOERROR suppressing'
 
     global curent_timer
     if curent_timer != None:
         curent_timer.cancel()
 
-    curent_timer = Timer(1, lambda : bus.write_byte_data(address,128,128), ())
+    curent_timer = Timer(1, stop, ())
     curent_timer.start()
+
+def stop():
+    try:
+        bus.write_byte_data(address,128,128)    
+    except IOError:
+        print 'IOERROR suppressing'
 
 def clamp(value,mi,ma):
     return min(max(value,mi), ma)
