@@ -8,13 +8,7 @@ Wheel *left;
 Wheel *right;
 
 void receiveData(int byteCount){
-  if(byteCount == 1){
-    Wire.read();
-    Wire.write(left->encoder->read());
-    Wire.write(right->encoder->read());
-    return;
-  }
-  else if(byteCount == 2){
+   if(byteCount == 2){
     int left_read = Wire.read();
     double left_target = mapd(left_read, 0, 255 , -2, 2);  
     left->setTargetVelocity(left_target);
@@ -32,8 +26,18 @@ void receiveData(int byteCount){
 }
 
 void sendData(){
-  Wire.write(121);
-  Wire.write(93);
+    long left_val = left->encoder->read();
+    long right_val = right->encoder->read();
+  
+    Wire.write((char)((left_val >> 24) & 0xFF));
+    Wire.write((char)((left_val >> 16) & 0xFF));
+    Wire.write((char)((left_val >> 8) & 0xFF));
+    Wire.write((char)((left_val >> 0) & 0xFF));
+
+    Wire.write((char)((right_val >> 24) & 0xFF));
+    Wire.write((char)((right_val >> 16) & 0xFF));
+    Wire.write((char)((right_val >> 8) & 0xFF));
+    Wire.write((char)((right_val >> 0) & 0xFF));
 }
 
 void setup() {
