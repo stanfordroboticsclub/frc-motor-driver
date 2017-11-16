@@ -10,7 +10,7 @@ Wheel::Wheel(int encPin1, int encPin2, int servoPin, int dir) {
     this->motor->attach(servoPin);
     
     this->last_time = millis();
-    this->last_encoder = 0;
+    this->last_encoder = this->encoder->read();
 
     this->pid = new PID(&(this->pidInput), &(this->pidOutput), &(this->pidSetpoint), this->kP, this->kI, this->kD, DIRECT);
     this->pid->SetOutputLimits(-255, 255);

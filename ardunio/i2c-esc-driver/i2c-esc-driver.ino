@@ -14,20 +14,20 @@ void receiveData(int byteCount){
     Wire.write(right->encoder->read());
     return;
   }
-
-  if(byteCount != 2) return;
-
-  if(Wire.available()) {
+  else if(byteCount == 2){
     int left_read = Wire.read();
     double left_target = mapd(left_read, 0, 255 , -2, 2);  
     left->setTargetVelocity(left_target);
 
-  }
-//  Serial.print(", "); 
-  if(Wire.available()) {
+
     int right_read = Wire.read();
     double right_target = mapd(right_read, 0, 255 , -2, 2);
     right->setTargetVelocity(right_target);
+
+  }else{
+    while (Wire.available()){ 
+      Wire.read(); 
+      }
   }
 }
 
