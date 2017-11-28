@@ -66,11 +66,11 @@ void Wheel::update(){
     // doesn't work as wheels are initialy not spining
     bool wire_contact = true;
     if(abs(last_encoder - this->encoder->read()) <= 1){
-      Serial.println("LOST ENCODER!");
+//      Serial.println("LOST ENCODER!");
       wire_contact = false;
     }
 
-    Serial.print(last_encoder);Serial.print(" "); Serial.print(this->encoder->read());
+    Serial.print(last_encoder);Serial.print(" "); Serial.println(this->encoder->read());
     
     this->last_encoder = this->encoder->read();
 
@@ -94,19 +94,19 @@ void Wheel::update(){
       this->motorOutput = this->pidOutput;
 			break;
 		case VELOCITY: //PIDF(measuredVelocity, output)
-			Serial.println("Mode: VELOCITY");
+//			Serial.println("Mode: VELOCITY");
       this->pidInput = this->measuredVelocity;
-      Serial.println(this->pidInput);
+//      Serial.println(this->pidInput);
 			this->pid->Compute();
-     Serial.println(this->pidOutput);
+//     Serial.println(this->pidOutput);
 			this->motorOutput = this->pidOutput + this->kF * this->targetVelocity;
 			break;
 		default:
 			Serial.println("Bad Mode");
 		}
-    Serial.println(this->motorOutput);
+//    Serial.println(this->motorOutput);
   	this->motorOutput = squeeze(this->motorOutput, -255, 255);
-  	Serial.println(this->motorOutput);
+//  	Serial.println(this->motorOutput);
   	int servoOutput = (int) mapd(this->motorOutput, -255, 255, 1500 - 532, 1500 + 532);
  
     this->motor->writeMicroseconds(servoOutput);
