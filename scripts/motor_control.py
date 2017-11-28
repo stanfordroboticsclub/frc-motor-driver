@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 import rospy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Quaternion, TransformStamped
+from nav_msgs.msg import Odometry
+import tf
 
-# import RPi.GPIO as RPIO
-# from RPIO import PWM
 import smbus
 from threading import Timer
 
 bus = smbus.SMBus(1)
 
-# This is the address we setup in the Arduino Program
 address = 0x04
-
 curent_timer = None
 
 def callback(data):
@@ -42,20 +40,72 @@ def stop():
     except IOError:
         print 'IOERROR suppressing'
 
+def read_encoders():
+    try:
+        data = bus.read_i2c_block_data(address,0)
+    except IOError:
+        print 'IOERROR suppressing'
+        encoder_timer = Timer(0.1, read_encoders, ())
+        encoder_timer.start()
+        return
+
+    left_dist  =((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
+    right_dist =((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7])/10000
+
+    time = rospy.Time.now() 
+
+    odom_quat = tf.createQuaternionMsgFromYaw(th);
+
+    odom_trans = TransformStamped()
+    odom_trans.header.stamp = time;
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "base_link";
+
+    odom_trans.transform.translation.x = x;
+    odom_trans.transform.translation.y = y;
+    odom_trans.transform.translation.z = 0.0;
+    odom_trans.transform.rotation = odom_quat;
+
+    odom_trans.sendTransform(odom_trans);
+
+    odom = Odometry()
+    odom.header.stamp = time 
+    odom.header.frame_id = 'odom'
+
+    odom.pose.pose.position.x = x;
+    odom.pose.pose.position.y = y;
+    odom.pose.pose.position.z = 0.0;
+    odom.pose.pose.orientation = odom_quat;
+
+    odom.child_frame_id = "base_link";
+    odom.twist.twist.linear.x = vx;
+    odom.twist.twist.linear.y = vy;
+    odom.twist.twist.angular.z = vth;
+
+    odom_pub.publish(odom)
+
+
+    encoder_timer = Timer(0.1, read_encoders, ())
+    encoder_timer.start()
+
+
 def clamp(value,mi,ma):
     return min(max(value,mi), ma)
     
 def listener():
+    global odom_pub, odom_trans
+    stop()
 
     rospy.init_node('motor_driver_pwm')
-
     rospy.Subscriber("turtle1/cmd_vel", Twist, callback)
+    odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
 
-    # spin() simply keeps python from exiting until this node is stopped
+    odom_trans = tf.TransformBroadcaster()
+
+    read_encoders()
     rospy.spin()
 
 if __name__ == '__main__':
-    stop()
     listener()
 
 
