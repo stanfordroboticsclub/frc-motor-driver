@@ -36,17 +36,27 @@ class Controller:
         interval = (new_time - self.time).to_sec()
         self.time = new_time
 
+        # print 'interval', interval
+
         dth = (left - right)/self.wheel_base
 
+        # print 'dth',dth
+
         alpha = (math.pi - dth)/2 - self.th
-        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(alpha) ) )
+        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+
+        # print 'alpha', alpha
+        # print 'legth', length
 
         dx = length * math.cos(alpha)
         dy = length * math.sin(alpha)
 
+        # print 'dx',dx
+        # print 'dy',dy
+
         #calculation may not be correct as velocities are in local frame?
-        self.vx = dx / interval
-        self.vy = dy / interval
+        self.vx = 0
+        self.vy = 1
         self.vth = dth / interval
 
         self.x += dx
@@ -55,16 +65,16 @@ class Controller:
 
     def read_encoders(self):
 
-        left_dist  = 0.12
-        right_dist = 0.08
+        left_dist  = 0.18
+        right_dist = 0.22
 
         self.calculate_offset(left_dist,right_dist)
 
         trans = self.generate_odom_trans()
         self.odom_trans.sendTransform(trans);
 
-        message = self.generate_odom_message()
-        self.odom_pub.publish(message)
+#        message = self.generate_odom_message()
+#        self.odom_pub.publish(message)
 
         encoder_timer = Timer(0.1, self.read_encoders, ())
         encoder_timer.start()
@@ -72,7 +82,7 @@ class Controller:
     def generate_odom_trans(self):
         #self.odom_quat = tf.createQuaternionMsgFromYaw(self.th)
 
-        q = tf.transformations.quaternion_from_euler(0, 0, self.th)
+        q = tf.transformations.quaternion_from_euler(0, 0, -self.th)
         self.odom_quat = Quaternion(*q)
 
         odom_transform = TransformStamped()
