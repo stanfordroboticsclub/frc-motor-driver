@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import rospy
+import tf2_ros
 from geometry_msgs.msg import Twist, Quaternion, TransformStamped
 from nav_msgs.msg import Odometry
 import tf
 
 import smbus
 from threading import Timer
+import math
 
 bus = smbus.SMBus(1)
 
@@ -44,7 +46,7 @@ class Controller:
         self.robot_frame = 'base_link'
 
         self.odom_pub = rospy.Publisher(self.world_frame, Odometry, queue_size=10)
-        self.odom_trans = tf.TransformBroadcaster()
+        self.odom_trans = tf2_ros.TransformBroadcaster()
 
         self.x = 0
         self.y = 0
@@ -59,7 +61,7 @@ class Controller:
     def calculate_offset(self,left,right):
 
         new_time = rospy.Time.now() 
-        interval = (new_time - self.time).toSec()
+        interval = (new_time - self.time).to_sec()
         self.time = new_time
 
         dth = (left - right)/self.wheel_base
@@ -99,14 +101,16 @@ class Controller:
         message = self.generate_odom_message()
         self.odom_pub.publish(message)
 
-        encoder_timer = Timer(0.1, read_encoders, ())
+        encoder_timer = Timer(0.1, self.read_encoders, ())
         encoder_timer.start()
 
     def generate_odom_trans(self):
-        self.odom_quat = tf.createQuaternionMsgFromYaw(self.th)
+        q = tf.transformations.quaternion_from_euler(0, 0, self.th)
+        self.odom_quat = Quaternion(*q)
+
 
         odom_transform = TransformStamped()
-        odom_transform.header.stamp = time
+        odom_transform.header.stamp = self.time
         odom_transform.header.frame_id = self.world_frame
         odom_transform.child_frame_id = self.robot_frame
 
@@ -118,7 +122,7 @@ class Controller:
 
     def generate_odom_message(self):
         odom = Odometry()
-        odom.header.stamp = time 
+        odom.header.stamp = self.time 
         odom.header.frame_id = self.world_frame
         odom.child_frame_id = self.robot_frame
 
