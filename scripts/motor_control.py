@@ -105,7 +105,8 @@ class Controller:
         encoder_timer.start()
 
     def generate_odom_trans(self):
-        q = tf.transformations.quaternion_from_euler(0, 0, self.th)
+        # not sure why the minus is here
+        q = tf.transformations.quaternion_from_euler(0, 0, -self.th)
         self.odom_quat = Quaternion(*q)
 
 
