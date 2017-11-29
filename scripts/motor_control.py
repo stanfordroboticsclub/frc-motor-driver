@@ -67,7 +67,7 @@ class Controller:
         dth = (left - right)/self.wheel_base
 
         alpha = (math.pi - dth)/2 - self.th
-        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(alpha) ) )
+        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
 
         dx = length * math.cos(alpha)
         dy = length * math.sin(alpha)
