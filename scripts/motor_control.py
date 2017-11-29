@@ -15,10 +15,6 @@ curent_timer = None
 def callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
 
-    # data.linear
-    # data.angular
-
-
     left = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),100,156)
     right = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),100,156)
 
@@ -40,69 +36,116 @@ def stop():
     except IOError:
         print 'IOERROR suppressing'
 
-def read_encoders():
-    try:
-        data = bus.read_i2c_block_data(address,0)
-    except IOError:
-        print 'IOERROR suppressing'
+class Controller:
+
+    def __init__(self):
+        self.wheel_base = 0.3 # placeholder value
+        self.world_frame = 'odom'
+        self.robot_frame = 'base_link'
+
+        self.odom_pub = rospy.Publisher(self.world_frame, Odometry, queue_size=10)
+        self.odom_trans = tf.TransformBroadcaster()
+
+        self.x = 0
+        self.y = 0
+        self.th = 0
+
+        self.vx = 0
+        self.vy = 0
+        self.vth = 0
+
+        self.time = rospy.Time.now()
+
+    def calculate_offset(self,left,right):
+
+        new_time = rospy.Time.now() 
+        interval = (new_time - self.time).toSec()
+        self.time = new_time
+
+        dth = (left - right)/self.wheel_base
+
+        alpha = (math.pi - dth)/2 - self.th
+        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(alpha) ) )
+
+        dx = length * math.cos(alpha)
+        dy = length * math.sin(alpha)
+
+        #calculation may not be correct as velocities are in local frame?
+        self.vx = dx / interval
+        self.vy = dy / interval
+        self.vth = dth / interval
+
+        self.x += dx
+        self.y += dy
+        self.th += dth
+
+    def read_encoders(self):
+        try:
+            data = bus.read_i2c_block_data(address,0)
+        except IOError:
+            print 'IOERROR suppressing'
+            encoder_timer = Timer(0.1, read_encoders, ())
+            encoder_timer.start()
+            return
+
+        left_dist  =((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
+        right_dist =((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7])/10000
+
+        self.calculate_offset(left_dist,right_dist)
+
+        trans = self.generate_odom_trans()
+        self.odom_trans.sendTransform(trans);
+
+        message = self.generate_odom_message()
+        self.odom_pub.publish(message)
+
         encoder_timer = Timer(0.1, read_encoders, ())
         encoder_timer.start()
-        return
 
-    left_dist  =((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
-    right_dist =((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7])/10000
+    def generate_odom_trans(self):
+        self.odom_quat = tf.createQuaternionMsgFromYaw(self.th)
 
-    time = rospy.Time.now() 
+        odom_transform = TransformStamped()
+        odom_transform.header.stamp = time
+        odom_transform.header.frame_id = self.world_frame
+        odom_transform.child_frame_id = self.robot_frame
 
-    odom_quat = tf.createQuaternionMsgFromYaw(th);
+        odom_transform.transform.translation.x = self.x
+        odom_transform.transform.translation.y = self.y
+        odom_transform.transform.translation.z = 0.0
+        odom_transform.transform.rotation = self.odom_quat
+        return odom_transform
 
-    odom_trans = TransformStamped()
-    odom_trans.header.stamp = time;
-    odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "base_link";
+    def generate_odom_message(self):
+        odom = Odometry()
+        odom.header.stamp = time 
+        odom.header.frame_id = self.world_frame
+        odom.child_frame_id = self.robot_frame
 
-    odom_trans.transform.translation.x = x;
-    odom_trans.transform.translation.y = y;
-    odom_trans.transform.translation.z = 0.0;
-    odom_trans.transform.rotation = odom_quat;
+        odom.pose.pose.position.x = self.x
+        odom.pose.pose.position.y = self.y
+        odom.pose.pose.position.z = 0.0
+        odom.pose.pose.orientation = self.odom_quat
 
-    odom_trans.sendTransform(odom_trans);
+        odom.twist.twist.linear.x = self.vx
+        odom.twist.twist.linear.y = self.vy
+        odom.twist.twist.angular.z = self.vth
 
-    odom = Odometry()
-    odom.header.stamp = time 
-    odom.header.frame_id = 'odom'
-
-    odom.pose.pose.position.x = x;
-    odom.pose.pose.position.y = y;
-    odom.pose.pose.position.z = 0.0;
-    odom.pose.pose.orientation = odom_quat;
-
-    odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = vx;
-    odom.twist.twist.linear.y = vy;
-    odom.twist.twist.angular.z = vth;
-
-    odom_pub.publish(odom)
-
-
-    encoder_timer = Timer(0.1, read_encoders, ())
-    encoder_timer.start()
+        return odom
 
 
 def clamp(value,mi,ma):
     return min(max(value,mi), ma)
     
 def listener():
-    global odom_pub, odom_trans
     stop()
 
     rospy.init_node('motor_driver_pwm')
     rospy.Subscriber("turtle1/cmd_vel", Twist, callback)
-    odom_pub = rospy.Publisher('odom', Odometry, queue_size=10)
 
-    odom_trans = tf.TransformBroadcaster()
+    control = Controller()
+    control.read_encoders()
 
-    read_encoders()
     rospy.spin()
 
 if __name__ == '__main__':
