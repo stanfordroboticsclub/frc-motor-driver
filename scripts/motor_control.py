@@ -56,18 +56,26 @@ class Controller:
         self.vy = 0
         self.vth = 0
 
+        self.last_left = 0
+        self.last_right = 0
+
         self.time = rospy.Time.now()
 
     def calculate_offset(self,left,right):
+
+        dleft = left - self.last_left
+        dright = right - self.last_right
+        self.last_left = left
+        self.last_right = right
 
         new_time = rospy.Time.now() 
         interval = (new_time - self.time).to_sec()
         self.time = new_time
 
-        dth = (left - right)/self.wheel_base
+        dth = (dleft - dright)/self.wheel_base
 
         alpha = (math.pi - dth)/2 - self.th
-        length = math.sqrt( 2* ( right/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+        length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
 
         dx = length * math.cos(alpha)
         dy = length * math.sin(alpha)
