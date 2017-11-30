@@ -81,6 +81,13 @@ class Controller:
         self.y += dy
         self.th += dth
 
+    def decode_data(self,data):
+        num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
+        # implement two's complement
+        if num & (1 << 31):
+            num = ~abs(num) + 1
+        return num
+
     def read_encoders(self):
         try:
             data = bus.read_i2c_block_data(address,0)
@@ -90,8 +97,8 @@ class Controller:
             encoder_timer.start()
             return
 
-        left_dist  =((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
-        right_dist =((data[4] << 24) + (data[5] << 16) + (data[6] << 8) + data[7])/10000
+        left_dist  = self.decode_data(data[0:3])
+        right_dist  = self.decode_data(data[4:7])
 
         self.calculate_offset(left_dist,right_dist)
 
