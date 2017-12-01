@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import division
+
 import rospy
 import tf2_ros
 from geometry_msgs.msg import Twist, Quaternion, TransformStamped
@@ -41,7 +43,7 @@ def stop():
 class Controller:
 
     def __init__(self):
-        self.wheel_base = 0.3 # placeholder value
+        self.wheel_base = 0.46
         self.world_frame = 'odom'
         self.robot_frame = 'base_link'
 
@@ -68,6 +70,8 @@ class Controller:
         self.last_left = left
         self.last_right = right
 
+	#rospy.loginfo(str(left)+', '+str(right))
+
         new_time = rospy.Time.now() 
         interval = (new_time - self.time).to_sec()
         self.time = new_time
@@ -75,7 +79,10 @@ class Controller:
         dth = (dleft - dright)/self.wheel_base
 
         alpha = (math.pi - dth)/2 - self.th
-        length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+	if dth != 0:
+		length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+	else:
+		length = 0
 
         dx = length * math.cos(alpha)
         dy = length * math.sin(alpha)
@@ -90,23 +97,23 @@ class Controller:
         self.th += dth
 
     def decode_data(self,data):
-        num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])/10000
+        num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])
         # implement two's complement
         if num & (1 << 31):
             num = ~abs(num) + 1
-        return num
+        return num/10000
 
     def read_encoders(self):
         try:
             data = bus.read_i2c_block_data(address,0)
         except IOError:
             print 'IOERROR suppressing'
-            encoder_timer = Timer(0.1, read_encoders, ())
+            encoder_timer = Timer(0.1, self.read_encoders, ())
             encoder_timer.start()
             return
 
-        left_dist  = self.decode_data(data[0:3])
-        right_dist  = self.decode_data(data[4:7])
+        left_dist  = self.decode_data(data[0:4])
+        right_dist  = self.decode_data(data[4:8])
 
         self.calculate_offset(left_dist,right_dist)
 
