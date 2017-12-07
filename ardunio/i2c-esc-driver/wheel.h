@@ -48,6 +48,7 @@ struct Wheel{
 	void setTargetVelocity(double targetSpeed);
 	void setTargetPosition(double targetPosition);
 	void setTargetVoltage(double targetVoltage);
+  void Wheel::stop();
 	void resetPosition();
 	void update();
 };

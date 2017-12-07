@@ -11,13 +11,16 @@ Wheel::Wheel(int encPin1, int encPin2, int servoPin, int dir) {
     
     this->last_time = millis();
     this->last_encoder = this->encoder->read();
+    this->measuredPosition = this->last_encoder / this->TICKS_PER_REV * this->WHEEL_CIRCUMFERENCE;
+
+    this->pidSetpoint = 0;
+    this->pidInput = 0;
+    this->pidOutput = 0;
 
     this->pid = new PID(&(this->pidInput), &(this->pidOutput), &(this->pidSetpoint), this->kP, this->kI, this->kD, DIRECT);
     this->pid->SetOutputLimits(-255, 255);
-    this->pid->SetMode(AUTOMATIC);
 	  
-	  this->measuredPosition = 0;
-	  mode = STOP;
+	  this->mode = STOP;
 }
 
 void Wheel::setMode(WheelMode mode) {
@@ -37,20 +40,28 @@ void Wheel::reverseWheel() {
 }
 
 void Wheel::setTargetVelocity(double targetSpeed){
+  this->pid->SetMode(AUTOMATIC);
   this->targetVelocity = this->dir * targetSpeed;
   this->pidSetpoint = this->targetVelocity;
 	this->setMode(VELOCITY);
 }
 
 void Wheel::setTargetPosition(double targetPosition) {
+  this->pid->SetMode(AUTOMATIC);
 	this->targetPosition = this->dir * targetPosition;
 	this->pidSetpoint = this->targetPosition;
 	this->setMode(POSITION);
 }
 
 void Wheel::setTargetVoltage(double targetVoltage) {
+  this->pid->SetMode(MANUAL);
 	this->targetVoltage = this->dir * targetVoltage;
 	this->setMode(VOLTAGE);
+}
+
+void Wheel::stop(){
+  this->pid->SetMode(MANUAL);
+  this->setMode(STOP);
 }
 
 void Wheel::resetPosition() {
@@ -70,7 +81,7 @@ void Wheel::update(){
       wire_contact = false;
     }
 
-    Serial.print(last_encoder);Serial.print(" "); Serial.println(this->encoder->read());
+//    Serial.print(last_encoder);Serial.print(" "); Serial.println(this->encoder->read());
     
     this->last_encoder = this->encoder->read();
 
@@ -104,7 +115,6 @@ void Wheel::update(){
 		default:
 			Serial.println("Bad Mode");
 		}
-//    Serial.println(this->motorOutput);
   	this->motorOutput = squeeze(this->motorOutput, -255, 255);
 //  	Serial.println(this->motorOutput);
   	int servoOutput = (int) mapd(this->motorOutput, -255, 255, 1500 - 532, 1500 + 532);
