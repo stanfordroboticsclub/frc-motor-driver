@@ -17,10 +17,10 @@ address = 0x04
 curent_timer = None
 
 def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
+    #rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
 
-    left = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),100,156)
-    right = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),100,156)
+    left = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),100,156)
+    right = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),100,156)
 
     try:
         bus.write_byte_data(address,int(left),int(right))    
@@ -70,7 +70,7 @@ class Controller:
         self.last_left = left
         self.last_right = right
 
-	#rospy.loginfo(str(left)+', '+str(right))
+
 
         new_time = rospy.Time.now() 
         interval = (new_time - self.time).to_sec()
@@ -78,23 +78,36 @@ class Controller:
 
         dth = (dleft - dright)/self.wheel_base
 
+	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(dth))
+
+	self.th = self.th % (2*math.pi)
         alpha = (math.pi - dth)/2 - self.th
-	if dth != 0:
+
+	if dth == 0:
+		length = dleft
+	elif dleft+dright > 0:
 		length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+
+	elif dleft+dright < 0:
+		length = -math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
 	else:
 		length = 0
 
         dx = length * math.cos(alpha)
         dy = length * math.sin(alpha)
 
-        #calculation may not be correct as velocities are in local frame?
-        self.vx = dx / interval
-        self.vy = dy / interval
+	#rospy.loginfo(str(dx)+', '+str(dy)+", "+str(alpha))
+
+	#local frame velocities
+        self.vx = 0
+        self.vy = (dleft+dright) / interval
         self.vth = dth / interval
 
         self.x += dx
         self.y += dy
         self.th += dth
+	#rospy.loginfo('c'+str(self.x)+', '+str(self.y)+", "+str(self.th))
+
 
     def decode_data(self,data):
         num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])
