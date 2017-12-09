@@ -79,7 +79,7 @@ class Controller:
         dth = (dleft - dright)/self.wheel_base
 
         # aprox code
-        d_center = (dleft + dright)/self.wheel_base
+        d_center = (dleft + dright)/2
         dx = d_center * math.cos(self.th)
         dy = d_center * math.sin(self.th)
 
