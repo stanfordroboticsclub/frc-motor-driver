@@ -78,23 +78,30 @@ class Controller:
 
         dth = (dleft - dright)/self.wheel_base
 
+        # aprox code
+        d_center = (dleft + dright)/self.wheel_base
+        dx = d_center * math.cos(self.th)
+        dy = d_center * math.sin(self.th)
+
+
 	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(dth))
 
-	self.th = self.th % (2*math.pi)
-        alpha = (math.pi - dth)/2 - self.th
+	# self.th = self.th % (2*math.pi)
 
-	if dth == 0:
-		length = dleft
-	elif dleft+dright > 0:
-		length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+        # alpha = (math.pi - dth)/2 - self.th
 
-	elif dleft+dright < 0:
-		length = -math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
-	else:
-		length = 0
+	# if dth == 0:
+		# length = dleft
+	# elif dleft+dright > 0:
+		# length = math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
 
-        dx = length * math.cos(alpha)
-        dy = length * math.sin(alpha)
+	# elif dleft+dright < 0:
+		# length = -math.sqrt( 2* ( dright/dth + self.wheel_base/2)**2 * ( 1- math.cos(dth) ) )
+	# else:
+		# length = 0
+
+        # dx = length * math.cos(alpha)
+        # dy = length * math.sin(alpha)
 
 	#rospy.loginfo(str(dx)+', '+str(dy)+", "+str(alpha))
 
