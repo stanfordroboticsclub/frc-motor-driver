@@ -28,7 +28,7 @@ void receiveData(int byteCount) {
 void sendData() {
 
   long left_val = (long)(10000*left->measuredPosition);
-  long right_val = (long)(10000*right->measuredPosition);
+  long right_val = (long)(-10000*right->measuredPosition);
     
   char data[8];
 
