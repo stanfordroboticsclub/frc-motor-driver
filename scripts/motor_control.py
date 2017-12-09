@@ -70,8 +70,6 @@ class Controller:
         self.last_left = left
         self.last_right = right
 
-
-
         new_time = rospy.Time.now() 
         interval = (new_time - self.time).to_sec()
         self.time = new_time
@@ -83,9 +81,8 @@ class Controller:
         dx = d_center * math.cos(-self.th)
         dy = d_center * math.sin(-self.th)
 
-
-	rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(d_center))
-	rospy.loginfo('c '+str(self.x)+', '+str(self.y)+', '+str(self.th))
+	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(d_center))
+	#rospy.loginfo('c '+str(self.x)+', '+str(self.y)+', '+str(self.th))
 
         self.th = self.th % (2*math.pi)
 
@@ -104,7 +101,7 @@ class Controller:
         # dx = length * math.cos(alpha)
         # dy = length * math.sin(alpha)
 
-	rospy.loginfo(str(dx)+', '+str(dy)+", "+str(dth))
+	#rospy.loginfo(str(dx)+', '+str(dy)+", "+str(dth))
 
 	#local frame velocities
         self.vx = 0
@@ -118,6 +115,7 @@ class Controller:
 
 
     def decode_data(self,data):
+	rospy.loginfo(str(data[0])+', '+str(data[1])+", "+str(data[2])+", "+str(data[3]))
         num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])
         # implement two's complement
         if num & (1 << 31):
