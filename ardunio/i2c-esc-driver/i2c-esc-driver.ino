@@ -55,11 +55,13 @@ void setup() {
 
 
   left = new Wheel(2, 3, 11, 1);
-  left->setGains(40, 100, 0, 100);
+//  left->setGains(40, 100, 0, 100);
+  left->setGains(50, 0, 0, 110);
   left->setTargetVelocity(0);
 
   right = new Wheel(18, 19, 12, -1);
-  right->setGains(40, 100, 0, 100);
+//  right->setGains(40, 100, 0, 100);
+  right->setGains(50, 0, 0, 110);
   right->setTargetVelocity(0);
 
   Serial.begin(9600);
