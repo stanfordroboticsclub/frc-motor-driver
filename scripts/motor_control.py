@@ -70,8 +70,6 @@ class Controller:
         self.last_left = left
         self.last_right = right
 
-
-
         new_time = rospy.Time.now() 
         interval = (new_time - self.time).to_sec()
         self.time = new_time
@@ -80,13 +78,13 @@ class Controller:
 
         # aprox code
         d_center = (dleft + dright)/2
-        dx = d_center * math.cos(self.th)
-        dy = d_center * math.sin(self.th)
+        dx = d_center * math.cos(-self.th)
+        dy = d_center * math.sin(-self.th)
 
+	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(d_center))
+	#rospy.loginfo('c '+str(self.x)+', '+str(self.y)+', '+str(self.th))
 
-	rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(dth))
-
-	# self.th = self.th % (2*math.pi)
+        self.th = self.th % (2*math.pi)
 
         # alpha = (math.pi - dth)/2 - self.th
 
@@ -103,11 +101,11 @@ class Controller:
         # dx = length * math.cos(alpha)
         # dy = length * math.sin(alpha)
 
-	#rospy.loginfo(str(dx)+', '+str(dy)+", "+str(alpha))
+	#rospy.loginfo(str(dx)+', '+str(dy)+", "+str(dth))
 
 	#local frame velocities
         self.vx = 0
-        self.vy = (dleft+dright) / interval
+        self.vy = (dleft+dright)/float(2) / interval
         self.vth = dth / interval
 
         self.x += dx
@@ -117,6 +115,7 @@ class Controller:
 
 
     def decode_data(self,data):
+	rospy.loginfo(str(data[0])+', '+str(data[1])+", "+str(data[2])+", "+str(data[3]))
         num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])
         # implement two's complement
         if num & (1 << 31):
@@ -148,8 +147,8 @@ class Controller:
 
     def generate_odom_trans(self):
         # not sure why the minus is here
-        #q = tf.transformations.quaternion_from_euler(0, 0, -self.th)
-        q = tf.transformations.quaternion_from_euler(0, 0, self.th)
+        q = tf.transformations.quaternion_from_euler(0, 0, -self.th)
+        #q = tf.transformations.quaternion_from_euler(0, 0, self.th)
         self.odom_quat = Quaternion(*q)
 
 
