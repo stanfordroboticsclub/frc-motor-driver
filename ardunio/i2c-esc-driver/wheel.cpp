@@ -40,10 +40,14 @@ void Wheel::reverseWheel() {
 }
 
 void Wheel::setTargetVelocity(double targetSpeed){
-  this->pid->SetMode(AUTOMATIC);
-  this->targetVelocity = this->dir * targetSpeed;
-  this->pidSetpoint = this->targetVelocity;
-	this->setMode(VELOCITY);
+  if ( abs(targetSpeed) < 0.02 ){
+    this->stop();
+  }else{
+    this->pid->SetMode(AUTOMATIC);
+    this->targetVelocity = this->dir * targetSpeed;
+    this->pidSetpoint = this->targetVelocity;
+  	this->setMode(VELOCITY);
+  }
 }
 
 void Wheel::setTargetPosition(double targetPosition) {

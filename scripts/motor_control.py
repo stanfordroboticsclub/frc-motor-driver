@@ -84,7 +84,7 @@ class Controller:
         dy = d_center * math.sin(self.th)
 
 
-	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(dth))
+	rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(dth))
 
 	# self.th = self.th % (2*math.pi)
 
