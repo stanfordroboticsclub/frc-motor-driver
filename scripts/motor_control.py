@@ -19,8 +19,11 @@ curent_timer = None
 def callback(data):
     #rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
 
-    left = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),100,156)
-    right = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),100,156)
+    power_min = 80
+    power_max = 176
+
+    left = clamp(128 + data.linear.x* 64 - (data.angular.z * 64),power_min,power_max)
+    right = clamp(128 + data.linear.x* 64 + (data.angular.z * 64),power_min,power_max)
 
     try:
         bus.write_byte_data(address,int(left),int(right))    
