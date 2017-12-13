@@ -17,8 +17,6 @@ address = 0x04
 curent_timer = None
 
 def callback(data):
-    #rospy.loginfo(rospy.get_caller_id() + "I heard stuff")
-
     power_min = 80
     power_max = 176
 
@@ -67,6 +65,7 @@ class Controller:
         self.time = rospy.Time.now()
 
     def calculate_offset(self,left,right):
+	#rospy.loginfo('p '+str(left)+', '+str(right))
 
         dleft = left - self.last_left
         dright = right - self.last_right
@@ -85,7 +84,7 @@ class Controller:
         dy = d_center * math.sin(-self.th)
 
 	#rospy.loginfo('d '+str(dleft)+', '+str(dright)+', '+str(d_center))
-	#rospy.loginfo('c '+str(self.x)+', '+str(self.y)+', '+str(self.th))
+	#rospy.loginfo('c '+str(dx)+', '+str(dy)+', '+str(self.th))
 
         self.th = self.th % (2*math.pi)
 
@@ -114,15 +113,18 @@ class Controller:
         self.x += dx
         self.y += dy
         self.th += dth
-	#rospy.loginfo('c'+str(self.x)+', '+str(self.y)+", "+str(self.th))
+	#rospy.loginfo('f'+str(self.x)+', '+str(self.y)+", "+str(self.th))
 
 
     def decode_data(self,data):
 	rospy.loginfo(str(data[0])+', '+str(data[1])+", "+str(data[2])+", "+str(data[3]))
         num = ((data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3])
         # implement two's complement
+	rospy.loginfo('before '+bin(num))
         if num & (1 << 31):
-            num = ~abs(num) + 1
+            #num = ~abs(num) + 1
+	    num = num - 2**32
+	rospy.loginfo('after '+bin(num))
         return num/10000
 
     def read_encoders(self):
